@@ -26,8 +26,8 @@ LandarevAI - это веб-приложение чата с искусствен
 
 1. Клонируйте репозиторий:
 ```bash
-git clone https://github.com/yourusername/landarevai-chat.git
-cd landarevai-chat
+git clone https://github.com/Land1n/LandarevAI.git
+cd LandarevAI
 ```
 
 2. Установите зависимости:
@@ -43,7 +43,7 @@ OPENROUTER_API_KEY=ваш_ключ_api
 ## 🚀 Запуск
 
 ```bash
-python main.py
+uvicorn main:app
 ```
 
 Приложение будет доступно по адресу: `http://localhost:8000`
