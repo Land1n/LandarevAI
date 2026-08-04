@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandarevAI - Чат</title>
+    <link rel="stylesheet" href="/static/css/chat.css">
+    <!-- Подключаем библиотеку marked для рендеринга Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-header">
+            <div class="logo-container">
+                <div class="logo-icon">🤖</div>
+                <div>
+                    <h1>LandarevAI</h1>
+                    <span class="subtitle">Искусственный интеллект</span>
+                </div>
+            </div>
+            <div class="status">
+                <span class="status-dot"></span>
+                <span>Online</span>
+            </div>
+        </div>
+
+        <div class="chat-window" id="chatWindow">
+            {% for msg in messages %}
+                <div class="message {% if msg.username == 'LandarevAI' %}ai-message{% endif %}">
+                    <div class="message-header">
+                        <span class="username">{{ msg.username }}</span>
+                        <span class="time">{{ msg.time }}</span>
+                    </div>
+                    <div class="message-text">
+                        {% if msg.is_markdown %}
+                            {{ msg.text|safe }}
+                        {% else %}
+                            {{ msg.text }}
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="input-area">
+            <div class="input-top">
+                <input type="text" id="usernameInput" placeholder="Ваше имя..." value="ivan" maxlength="20">
+            </div>
+            <div class="input-row">
+                <input type="text" id="messageInput" placeholder="Введите сообщение..." maxlength="500">
+                <button id="sendButton">
+                    <span>Отправить</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>
