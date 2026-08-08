@@ -99,7 +99,7 @@ function getCurrentTime() {
 
 async function sendMessageToAPI(text) {
     try {
-        const response = await fetch(`/api?message=${encodeURIComponent(text)}`);
+        const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

@@ -38,47 +38,53 @@ pip install -r requirements.txt
 3. Создайте файл `.env` в корневой директории и добавьте ваш API ключ:
 ```env
 OPENROUTER_API_KEY=ваш_ключ_api
+OPENROUTER_API_BASE_URL=https://openrouter.ai/api/v1
 ```
 
 ## 🚀 Запуск
 
 ```bash
-uvicorn main:app
+uvicorn app.main:app --reload
 ```
 
-Приложение будет доступно по адресу: `http://localhost:8000`
+Приложение будет доступно по адресу: `http://localhost:8000/chat`
 
 ## 📁 Структура проекта
 
 ```
-landarevai-chat/
-├── main.py              # Основной файл приложения
-├── requirements.txt     # Зависимости Python
-├── .env                # Переменные окружения
-├── templates/
-│   └── chat.html       # HTML шаблон чата
-├── static/
-│   ├── css/
-│   │   └── chat.css    # Стили чата
-│   └── js/
-│       └── chat.js     # Клиентский JavaScript
-└── README.md           # Документация
+landarevai-ai/
+├── app/                    # Основная директория приложения
+│   ├── api/               # API эндпоинты
+│   │   ├── routers/       # Маршруты
+│   │   │   ├── ai_models/ # AI модели
+│   │   │   │   └── ai_models.py
+│   │   │   └── chat/      # Чат
+│   │   │       └── chat.py
+│   │   └── __init__.py
+│   ├── core/              # Ядро приложения
+│   │   ├── config.py      # Конфигурация
+│   │   └── __init__.py
+│   ├── static/            # Статические файлы
+│   │   ├── css/
+│   │   │   └── chat.css   # Стили чата
+│   │   └── js/
+│   │       └── chat.js    # Клиентский JavaScript
+│   ├── templates/         # HTML шаблоны
+│   │   └── chat.html      # Главная страница чата
+│   ├── main.py            # Основной файл приложения
+│   └── __init__.py
+├── .env                   # Переменные окружения
+├── requirements.txt       # Зависимости Python
+└── README.md              # Документация
 ```
 
 ## 🔧 API Эндпоинты
 
-- `GET /api` - Получение ответа от AI
+- `GET /chat` - Главная страница чата
+
+- `GET /api/v1/ai/` - Получение ответа от AI
   - Параметр: `message` (строка запроса)
   - Возвращает: JSON с ответом
-
-- `POST /send` - Отправка сообщения в чат
-  - Параметры: `username`, `text`
-  - Возвращает: `{"status": "ok"}`
-
-- `GET /messages` - Получение всех сообщений
-  - Возвращает: JSON массив сообщений
-
-- `GET /` - Главная страница чата
 
 ## 🎨 Особенности интерфейса
 
@@ -91,3 +97,6 @@ landarevai-chat/
   - Ссылки и изображения
   - Жирный и курсивный текст
 
+## 🧠 Используемые AI модели
+
+По умолчанию используется модель `openrouter/free`, которая предоставляет бесплатный доступ к различным AI моделям через OpenRouter API. Для изменения модели отредактируйте параметр `model` в файле `app/api/routers/ai_models/ai_models.py`.
