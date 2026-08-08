@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LandarevAI — Ошибка</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/error.css') }}">
+    <!-- Подключаем тот же шрифт -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="error-container">
+        <!-- Иконка ошибки -->
+        <div class="error-icon">
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+        </div>
+
+        <!-- Заголовки -->
+        <h1 class="error-title">Что-то пошло не так</h1>
+        <p class="error-subtitle">
+            Мы уже разбираемся&nbsp;— попробуйте обновить страницу или вернуться позже.
+        </p>
+
+        <!-- Блок с деталями (динамический) -->
+        <div class="error-details">
+            <div class="error-code" id="errorCode">Ошибка 500</div>
+            <div class="error-message" id="errorMessage">
+                Внутренняя ошибка сервера. <code>LandarevAI</code> временно недоступен.
+            </div>
+        </div>
+
+        <!-- Кнопки действий -->
+        <div class="error-actions">
+            <a href="/" class="btn btn-primary" id="refreshBtn">
+                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none">
+                    <path d="M23 4v6h-6" />
+                    <path d="M1 20v-6h6" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                </svg>
+                Попробовать снова
+            </a>
+        </div>
+
+        <!-- Статус / доп. информация -->
+        <div class="error-hint">
+            <span>
+                <span class="dot"></span>
+                Статус: <span style="color: rgba(255,255,255,0.5);">перезагрузка через 30с</span>
+            </span>
+            <span>🕒 <span id="timestamp"></span></span>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', path='js/error.js') }}"></script>
+</body>
+</html>

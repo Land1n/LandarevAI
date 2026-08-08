@@ -1,6 +1,7 @@
 from app.core.config import settings
 
 from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 from openai import OpenAI
 
 
@@ -23,8 +24,8 @@ async def root(message: str | None = None):
             )
             return {"message": response.choices[0].message.content}
         else:
-            return {"message": "No query provided"}
+            return RedirectResponse(url="/error?code=404", status_code=302)
     except Exception as e:
-        return {"message": "Error"}
+        return RedirectResponse(url="/error?code=500", status_code=302)
 
 

@@ -2,7 +2,9 @@ from app.core.config import settings
 
 from app.api.routers.ai_models import ai_models
 from app.api.routers.chat import chat
+from app.api.routers.error import error
 
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 
@@ -16,3 +18,8 @@ app.mount(
 
 app.include_router(ai_models.router)
 app.include_router(chat.router)
+app.include_router(error.router)
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/chat")
