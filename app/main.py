@@ -1,8 +1,6 @@
 from app.core.config import settings
 
-from app.api.routers.ai_models import ai_models
-from app.api.routers.chat import chat
-from app.api.routers.error import error
+from app.api.routers import ai_models,chat,error
 
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
