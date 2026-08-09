@@ -7,8 +7,12 @@ load_dotenv()
 
 class Settings(BaseSettings):
 
+    DATABASE_URL : str = os.getenv("DATABASE_URL")
+
     OPENROUTER_API_KEY : str = os.getenv("OPENROUTER_API_KEY")
     OPENROUTER_API_BASE_URL : str = os.getenv("OPENROUTER_API_BASE_URL")
+
+    DEBUG: bool = os.getenv("DEBUG") == "True"
 
     BASE_DIR:Path = Path(__file__).resolve().parent.parent
     STATIC_DIR:Path = BASE_DIR / "static"

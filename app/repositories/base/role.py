@@ -1,22 +1,25 @@
 from abc import ABC,abstractmethod
-from typing import List
+from typing import List,Optional
 
 from app.models.role import RoleModel
 
 class RoleRepository(ABC):
 
     @abstractmethod
-    def add_role(self, role: RoleModel):
+    def read_roles_all(self) -> List[RoleModel]:
         pass
     @abstractmethod
-    def update_role(self, role_id:int ,role: RoleModel):
+    def create_role(self, role: RoleModel) -> bool:
         pass
     @abstractmethod
-    def delete_role(self, role_id:int, role: RoleModel):
+    def read_role_by_id(self, role_id: int) -> Optional[RoleModel]:
         pass
     @abstractmethod
-    def get_all_roles(self) -> List[RoleModel]:
+    def read_role_by_name(self, role_name:str) -> Optional[RoleModel]:
         pass
     @abstractmethod
-    def get_role_by_id(self, role_id: int) -> RoleModel:
+    def update_role(self, role_id:int ,role: RoleModel) -> bool:
+        pass
+    @abstractmethod
+    def delete_role(self, role_id:int) -> bool:
         pass

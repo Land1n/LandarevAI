@@ -1,6 +1,6 @@
 from app.core.config import settings
 
-from app.api.routers import ai_models,chat,error
+from app.api.routers import ai_models,chat,error,test_database
 
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,9 @@ app.mount(
 app.include_router(ai_models.router)
 app.include_router(chat.router)
 app.include_router(error.router)
+
+if settings.DEBUG:
+    app.include_router(test_database.router)
 
 @app.get("/")
 def root():

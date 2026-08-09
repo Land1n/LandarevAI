@@ -1,20 +1,21 @@
 from abc import ABC,abstractmethod
-from typing import List
+from typing import List,Optional
 
 from app.models.message import MessageModel
 
 class MessageRepository(ABC):
     @abstractmethod
-    def get_all_messages(self) -> List[MessageModel]:
+    def read_messages_all(self) -> List[MessageModel]:
         pass
     @abstractmethod
-    def get_message_by_id(self, message_id: int ) -> MessageModel:
+    def read_messages_by_role(self,role_name:str) -> List[MessageModel]:
+        pass
+
+    @abstractmethod
+    def create_message(self,  message: MessageModel) -> bool:
         pass
     @abstractmethod
-    def get_message_by_role(self,role_id: int) -> List[MessageModel]:
-        pass
-    @abstractmethod
-    def create_message(self, message_id: int, message: MessageModel) -> bool:
+    def read_message_by_id(self, message_id: int ) -> Optional[MessageModel]:
         pass
     @abstractmethod
     def update_message(self, message_id: int, message: MessageModel) -> bool:
