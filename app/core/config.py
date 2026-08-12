@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 
+import logging
+
 load_dotenv()
 
 class Settings(BaseSettings):
@@ -18,5 +20,8 @@ class Settings(BaseSettings):
     STATIC_DIR:Path = BASE_DIR / "static"
     TEMPLATES_DIR:Path = BASE_DIR / "templates"
 
+    LOGGING_LEVEL: int = ( logging.DEBUG if DEBUG else logging.INFO )
 
 settings = Settings()
+
+logging.basicConfig(level=settings.LOGGING_LEVEL)

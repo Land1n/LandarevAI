@@ -45,7 +45,7 @@ def update_message(message_id: int, message: MessageShema, service: MessageServi
         text=message.text,
         role_id=message.role_id
     )
-    return {"result" : service.update_message(message_id=message_id,message=new_message)}
+    return {"result" : service.update_message(message_id=message_id, new_message=new_message)}
 
 
 @router.get("/role/{role_id}", response_model=None)
