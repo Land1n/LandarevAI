@@ -1,5 +1,6 @@
 from app.core.config import settings
 from app.core.dependencies import get_message_service,MessageService
+from app.core.dependencies import get_role_service,RoleService
 
 from app.database.database import create_db_and_tables
 
@@ -9,6 +10,7 @@ from fastapi.responses import HTMLResponse,RedirectResponse
 from fastapi.templating import Jinja2Templates
 import markdown
 import bleach
+
 
 router = APIRouter(prefix="/chat", tags=["AI Chat"])
 
@@ -31,13 +33,17 @@ def render_markdown(text):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def chat_page(request: Request):
-    return RedirectResponse(url="/error?code=500", status_code=302)
+async def chat_page(
+        request: Request,
+        message_service: MessageService = Depends(get_message_service),
+        role_service:RoleService = Depends(get_role_service)
+):
     try:
         create_db_and_tables()
         templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
         rendered_messages = []
-        messages = service.list_messages()
+        messages = message_service.list_messages()
+
         for msg in messages:
             if msg.get('is_markdown', False):
                 rendered_text = render_markdown(msg['text'])

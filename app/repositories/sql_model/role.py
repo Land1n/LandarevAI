@@ -30,8 +30,18 @@ class SqlModelRoleRepository(RoleRepository):
         role = self.session.exec(statement).first()
         return role
 
-    def update_role(self, role_id:int ,role: RoleModel) -> bool:
-        return False # TODO: Пока не реализованно
+    def update_role(self, role_id: int, role: RoleModel) -> bool:
+        try:
+            existing = self.read_role_by_id(role_id)
+            if not existing:
+                return False
+            existing.name = role.name
+            self.session.add(existing)
+            self.session.commit()
+            self.session.refresh(existing)
+            return True
+        except Exception as e:
+            return False
 
     def delete_role(self, role_id:int) -> bool:
         try:

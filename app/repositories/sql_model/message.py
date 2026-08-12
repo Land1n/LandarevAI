@@ -26,12 +26,13 @@ class SqlModelMessageRepository(MessageRepository):
             self.session.refresh(message)
             return True
         except Exception as e:
+            print(e)
             return False
 
     def update_message(self, message_id: int, message: MessageModel) -> bool:
         try:
             new_message = self.read_message_by_id(message_id)
-            if (new_message != None):
+            if (new_message is not None):
                 new_message.text = message.text
                 self.session.add(new_message)
                 self.session.commit()
