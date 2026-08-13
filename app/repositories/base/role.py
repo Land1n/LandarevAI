@@ -1,25 +1,10 @@
-from abc import ABC,abstractmethod
-from typing import List,Optional
+from app.repositories.generic import abstractmethod,GenericRepository
 
 from app.models.role import RoleModel
 
-class RoleRepository(ABC):
+from typing import List,Optional
 
+class RoleRepository(GenericRepository[RoleModel]):
     @abstractmethod
-    def read_roles_all(self) -> List[RoleModel]:
-        pass
-    @abstractmethod
-    def create_role(self, role: RoleModel) -> bool:
-        pass
-    @abstractmethod
-    def read_role_by_id(self, role_id: int) -> Optional[RoleModel]:
-        pass
-    @abstractmethod
-    def read_role_by_name(self, role_name:str) -> Optional[RoleModel]:
-        pass
-    @abstractmethod
-    def update_role(self, role_id:int ,role: RoleModel) -> bool:
-        pass
-    @abstractmethod
-    def delete_role(self, role_id:int) -> bool:
+    def read_by_name(self, role_name:str) -> Optional[RoleModel]:
         pass

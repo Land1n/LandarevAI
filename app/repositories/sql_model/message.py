@@ -12,24 +12,24 @@ class SqlModelMessageRepository(MessageRepository):
     def __init__(self, session:Session ):
         self.session = session
 
-    def read_message_by_id(self, message_id: int) -> Optional[MessageModel]:
+    def read_by_id(self, message_id: int) -> Optional[MessageModel]:
         self.logger.debug("Reading message by id: {}".format(message_id))
         statement = select(MessageModel).where(MessageModel.id == message_id)
         message = self.session.exec(statement).first()
         self.logger.debug("Read message by id: {}".format(message))
         return message
 
-    def read_messages_all(self) -> List[MessageModel]:
+    def read_all(self) -> List[MessageModel]:
         self.logger.debug("Reading all messages")
         data = self.session.exec(select(MessageModel)).all()
         self.logger.debug("Read all messages")
         return list(data)
 
-    def read_messages_by_role(self, role_name: str) -> List[MessageModel]:
+    def read_by_role(self, role_name: str) -> List[MessageModel]:
         self.logger.warning("Reading messages by role: {}".format(role_name))
         return [] # TODO: Пока не готово
 
-    def create_message(self, message: MessageModel) -> bool:
+    def create(self, message: MessageModel) -> bool:
         try:
             self.logger.debug("Creating new message: {}".format(message))
             self.session.add(message)
@@ -41,10 +41,10 @@ class SqlModelMessageRepository(MessageRepository):
             self.logger.error("Failed to create message: {}".format(e))
             return False
 
-    def update_message(self, message_id: int, message: MessageModel) -> bool:
+    def update(self, message_id: int, message: MessageModel) -> bool:
         try:
             self.logger.debug("Updating message: {}".format(message))
-            new_message = self.read_message_by_id(message_id)
+            new_message = self.read_by_id(message_id)
             if (new_message is not None):
                 new_message.text = message.text
                 self.session.add(new_message)
@@ -57,10 +57,10 @@ class SqlModelMessageRepository(MessageRepository):
             self.logger.error("Failed to update message: {}".format(e))
             return False
 
-    def delete_message(self, message_id: int) -> bool:
+    def delete(self, message_id: int) -> bool:
         try:
             self.logger.debug("Deleting message: {}".format(message_id))
-            message = self.read_message_by_id(message_id)
+            message = self.read_by_id(message_id)
             if (message != None):
                 self.session.delete(message)
                 self.session.commit()

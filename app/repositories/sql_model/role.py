@@ -12,13 +12,13 @@ class SqlModelRoleRepository(RoleRepository):
     def __init__(self, session:Session ):
         self.session = session
 
-    def read_roles_all(self) -> List[RoleModel]:
+    def read_all(self) -> List[RoleModel]:
         self.logger.debug("Reading all roles")
         data = self.session.exec(select(RoleModel)).all()
         self.logger.debug("Read all roles")
         return data
 
-    def create_role(self, role: RoleModel) -> bool:
+    def create(self, role: RoleModel) -> bool:
         try:
             self.logger.debug("Creating new role: {}".format(role))
             self.session.add(role)
@@ -30,24 +30,24 @@ class SqlModelRoleRepository(RoleRepository):
             self.logger.error("Failed to create new role: {}".format(e))
             return False
 
-    def read_role_by_id(self, role_id: int) -> Optional[RoleModel]:
+    def read_by_id(self, role_id: int) -> Optional[RoleModel]:
         self.logger.debug("Reading role by id: {}".format(role_id))
         statement = select(RoleModel).where(RoleModel.id == role_id)
         role = self.session.exec(statement).first()
         self.logger.debug("Read role by id: {}".format(role))
         return role
 
-    def read_role_by_name(self, role_name:str) -> Optional[RoleModel]:
+    def read_by_name(self, role_name:str) -> Optional[RoleModel]:
         self.logger.debug("Reading role by name: {}".format(role_name))
         statement = select(RoleModel).where(RoleModel.name == role_name)
         role = self.session.exec(statement).first()
         self.logger.debug("Read role by name: {}".format(role))
         return role
 
-    def update_role(self, role_id: int, role: RoleModel) -> bool:
+    def update(self, role_id: int, role: RoleModel) -> bool:
         try:
             self.logger.debug("Updating role: {}".format(role))
-            existing = self.read_role_by_id(role_id)
+            existing = self.read_by_id(role_id)
             if not existing:
                 self.logger.error("Failed to update role: {}".format(role))
                 return False
@@ -61,10 +61,10 @@ class SqlModelRoleRepository(RoleRepository):
             self.logger.error("Failed to update role: {}".format(e))
             return False
 
-    def delete_role(self, role_id:int) -> bool:
+    def delete(self, role_id:int) -> bool:
         try:
             self.logger.debug("Deleting role: {}".format(role))
-            role = self.read_role_by_id(role_id)
+            role = self.read_by_id(role_id)
             if (role != None):
                 self.session.delete(role)
                 self.session.commit()

@@ -17,8 +17,8 @@ class MessageModel(MessageShema, table=True):
     __tablename__ = "message"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    role_id: Optional[int] = Field(default=None, foreign_key="role.id")
 
+    role_id: Optional[int] = Field(default=None, foreign_key="role.id")
     role: Optional["RoleModel"] = Relationship(back_populates="messages")
 
     created_at_time: time = Field(default_factory=current_time, sa_type=Time)
