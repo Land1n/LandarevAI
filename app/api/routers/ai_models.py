@@ -1,6 +1,8 @@
 from app.core.config import settings
 
-from fastapi import APIRouter
+from app.core.dependencies import get_message_service,MessageService
+
+from fastapi import APIRouter,Depends
 from fastapi.responses import RedirectResponse
 from openai import OpenAI
 
@@ -14,12 +16,17 @@ client = OpenAI(
 router = APIRouter(prefix="/api/v1/ai", tags=["AI Models"])
 
 @router.get("/")
-async def root(message: str | None = None):
+async def root(message: str | None = None,message_service: MessageService = Depends(get_message_service)):
+
+    messages = message_service.list_messages()
+    render_messages = []
+    for message in messages:
+        render_messages.append({"role": ("user" if message.role_name == "Пользователь" else "assistant"), "content":message.text})
     try:
         if message:
             response = client.chat.completions.create(
                 model="openrouter/free",
-                messages=[{"role": "user","content": message }],
+                messages=render_messages,
                 extra_body={"reasoning": {"enabled": True}}
             )
             return {"message": response.choices[0].message.content}

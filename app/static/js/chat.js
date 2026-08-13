@@ -79,18 +79,38 @@ function getCurrentTime() {
            now.getMinutes().toString().padStart(2, '0');
 }
 
-async function sendMessageToAPI(text) {
-    try {
-        const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
-        if (!response.ok) {
-            window.location.href = `/error?code=${response.status}`;
-        }
-        const data = await response.json();
-        return data.message;
-    } catch (error) {
-        window.location.href = `/error?code=500`;
+// --- НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БД ---
+
+// Сохраняет сообщение в БД через POST /chat/
+async function saveMessageToDB(text, roleName) {
+    const response = await fetch('/chat/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            text: text,
+            role_name: roleName
+        })
+    });
+    if (!response.ok) {
+        throw new Error(`Ошибка сохранения сообщения: ${response.status}`);
     }
+    return await response.json();
 }
+
+// --- ОСТАВЛЯЕМ ВЫЗОВ AI ---
+
+async function sendMessageToAI(text) {
+    const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
+    if (!response.ok) {
+        throw new Error(`Ошибка AI: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.message;
+}
+
+// --- ПЕРЕДЕЛАННАЯ ОСНОВНАЯ ФУНКЦИЯ ---
 
 function switchToChatMode() {
     if (!appArea.classList.contains('chat-mode')) {
@@ -103,7 +123,6 @@ function switchToChatMode() {
 
 async function sendMessage() {
     const text = messageInput.value.trim();
-    // Имя берем из localStorage или ставим по умолчанию, так как поля имени больше нет в UI
     const username = localStorage.getItem('username') || 'Пользователь';
 
     if (!text) {
@@ -120,30 +139,41 @@ async function sendMessage() {
         isFirstMessage = false;
     }
 
+    // Блокируем интерфейс
     sendButton.disabled = true;
     messageInput.disabled = true;
-    // Меняем иконку на спиннер / текст
     sendButton.innerHTML = `<span style="font-size:12px;font-weight:600;">...</span>`;
 
     const userTime = getCurrentTime();
-    addMessageToChat(username, text, userTime, false);
-    messageInput.value = '';
 
     try {
+        // 1. Сохраняем сообщение пользователя в БД
+        await saveMessageToDB(text, username);
+        // 2. Отображаем его в чате
+        addMessageToChat(username, text, userTime, false);
+        messageInput.value = '';
+
+        // 3. Получаем ответ от AI
         showTypingIndicator();
-        const apiResponse = await sendMessageToAPI(text);
+        const aiResponse = await sendMessageToAI(text);
         removeTypingIndicator();
+
+        // 4. Сохраняем ответ AI в БД
+        await saveMessageToDB(aiResponse, 'LandarevAI');
+        // 5. Отображаем ответ AI
         const aiTime = getCurrentTime();
-        addMessageToChat('LandarevAI', apiResponse, aiTime, true);
+        addMessageToChat('LandarevAI', aiResponse, aiTime, true);
+
     } catch (error) {
         removeTypingIndicator();
         console.error('Ошибка:', error);
         const errorTime = getCurrentTime();
+        // Показываем сообщение об ошибке (без сохранения)
         addMessageToChat('LandarevAI', 'Извините, произошла ошибка. Попробуйте позже.', errorTime, false);
     } finally {
+        // Разблокируем интерфейс
         sendButton.disabled = false;
         messageInput.disabled = false;
-        // Возвращаем иконку отправки
         sendButton.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="19" x2="12" y2="5"></line>
@@ -154,6 +184,7 @@ async function sendMessage() {
     }
 }
 
+// Обработчики событий (без изменений)
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !messageInput.disabled) {
@@ -169,3 +200,40 @@ document.addEventListener('DOMContentLoaded', () => {
         isFirstMessage = false;
     }
 });
+
+// --- Функция удаления всех сообщений ---
+async function deleteAllMessages() {
+    // Подтверждение
+    if (!confirm('Вы уверены, что хотите удалить всю историю чата?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/chat/', {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`Ошибка удаления: ${response.status}`);
+        }
+        // Успешно – очищаем DOM
+        // Удаляем все сообщения и индикатор печати
+        const messages = chatWindow.querySelectorAll('.message');
+        messages.forEach(msg => msg.remove());
+        removeTypingIndicator(); // если он висит
+
+        // Переключаем обратно в приветственный режим
+        appArea.classList.remove('chat-mode');
+        isFirstMessage = true;
+
+        // Показываем приветствие (оно скрыто в режиме чата)
+        // Оно уже есть в DOM, просто скрыто через display:none в .chat-mode .welcome-content
+        // Поэтому после снятия класса оно появится
+
+    } catch (error) {
+        console.error('Ошибка при очистке чата:', error);
+        alert('Не удалось очистить чат. Попробуйте позже.');
+    }
+}
+
+// --- Обработчик для кнопки очистки ---
+document.getElementById('clearChatBtn').addEventListener('click', deleteAllMessages);

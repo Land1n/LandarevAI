@@ -1,13 +1,16 @@
 from app.core.config import settings
+
 from app.core.dependencies import get_message_service,MessageService
-from app.core.dependencies import get_role_service,RoleService
+
+from app.schemas.message import MessageShema
+from app.models.message import MessageModel
 
 from app.database.database import create_db_and_tables
 
 from fastapi import APIRouter, Request, Depends
-
-from fastapi.responses import HTMLResponse,RedirectResponse
+from fastapi.responses import HTMLResponse,RedirectResponse,Response
 from fastapi.templating import Jinja2Templates
+
 import markdown
 import bleach
 
@@ -33,10 +36,9 @@ def render_markdown(text):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def chat_page(
+def chat_page(
         request: Request,
-        message_service: MessageService = Depends(get_message_service),
-        role_service:RoleService = Depends(get_role_service)
+        message_service: MessageService = Depends(get_message_service)
 ):
     try:
         create_db_and_tables()
@@ -45,15 +47,11 @@ async def chat_page(
         messages = message_service.list_messages()
 
         for msg in messages:
-            if msg.get('is_markdown', False):
-                rendered_text = render_markdown(msg['text'])
-            else:
-                rendered_text = msg['text']
             rendered_messages.append({
-                'username': msg['username'],
-                'text': rendered_text,
-                'time': msg['time'],
-                'is_markdown': msg.get('is_markdown', False)
+                'username': msg.role_name,
+                'text':  render_markdown(msg.text),
+                'time': (msg.created_at_time.strftime("%H:%M")),
+                'is_markdown': True
             })
 
         return templates.TemplateResponse(
@@ -71,3 +69,22 @@ async def chat_page(
         return RedirectResponse(url="/error?code=403", status_code=302)
     except Exception as e:
         return RedirectResponse(url="/error?code=500", status_code=302)
+
+@router.post("/")
+def send_message(
+        message:MessageShema,
+        message_service: MessageService = Depends(get_message_service)
+):
+    create_db_and_tables()
+
+    return {"result": message_service.create_message(MessageModel(**message.model_dump()))}
+
+
+@router.delete("/")
+def delete_all_message(message_service: MessageService = Depends(get_message_service)
+):
+    create_db_and_tables()
+
+    if all(message_service.delete_message(msg.id) for msg in message_service.list_messages()):
+        return Response(status_code=200)
+    return RedirectResponse(url="/error?code=500", status_code=302)
