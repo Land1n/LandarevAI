@@ -1,77 +1,23 @@
 from app.repositories.base.role import RoleRepository,RoleModel
 
+from app.core.logger.logger import convert_result, logger
+from app.core.logger.schemas.answer import Answer
+from app.repositories.sql_model.generic import SQLModelGenericRepository
+
 from sqlmodel import Session,select
 
-from typing import List,Optional
+from typing import Optional
 
-import logging
 
-class SqlModelRoleRepository(RoleRepository):
-    logger = logging.getLogger(__name__)
+class SqlModelRoleRepository(SQLModelGenericRepository[RoleModel],RoleRepository):
 
     def __init__(self, session:Session ):
-        self.session = session
+        super().__init__(session)
 
-    def read_all(self) -> List[RoleModel]:
-        self.logger.debug("Reading all roles")
-        data = self.session.exec(select(RoleModel)).all()
-        self.logger.debug("Read all roles")
-        return data
+    @convert_result
+    @logger("Repository")
+    def read_by_name(self, name:str) -> Answer[RoleModel]:
+        statement = select(RoleModel).where(RoleModel.name == name)
+        entity = self.session.exec(statement).first()
+        return Answer[RoleModel](result=entity, description=f"{entity=}")
 
-    def create(self, role: RoleModel) -> bool:
-        try:
-            self.logger.debug("Creating new role: {}".format(role))
-            self.session.add(role)
-            self.session.commit()
-            self.session.refresh(role)
-            self.logger.debug("Created new role: {}".format(role))
-            return True
-        except Exception as e:
-            self.logger.error("Failed to create new role: {}".format(e))
-            return False
-
-    def read_by_id(self, role_id: int) -> Optional[RoleModel]:
-        self.logger.debug("Reading role by id: {}".format(role_id))
-        statement = select(RoleModel).where(RoleModel.id == role_id)
-        role = self.session.exec(statement).first()
-        self.logger.debug("Read role by id: {}".format(role))
-        return role
-
-    def read_by_name(self, role_name:str) -> Optional[RoleModel]:
-        self.logger.debug("Reading role by name: {}".format(role_name))
-        statement = select(RoleModel).where(RoleModel.name == role_name)
-        role = self.session.exec(statement).first()
-        self.logger.debug("Read role by name: {}".format(role))
-        return role
-
-    def update(self, role_id: int, role: RoleModel) -> bool:
-        try:
-            self.logger.debug("Updating role: {}".format(role))
-            existing = self.read_by_id(role_id)
-            if not existing:
-                self.logger.error("Failed to update role: {}".format(role))
-                return False
-            existing.name = role.name
-            self.session.add(existing)
-            self.session.commit()
-            self.session.refresh(existing)
-            self.logger.debug("Updated role: {}".format(role))
-            return True
-        except Exception as e:
-            self.logger.error("Failed to update role: {}".format(e))
-            return False
-
-    def delete(self, role_id:int) -> bool:
-        try:
-            self.logger.debug("Deleting role: {}".format(role))
-            role = self.read_by_id(role_id)
-            if (role != None):
-                self.session.delete(role)
-                self.session.commit()
-                self.logger.debug("Deleted role: {}".format(role))
-                return True
-            self.logger.debug("Failed to delete role: {}".format(role))
-            return False
-        except Exception as e:
-            self.logger.error("Failed to delete role: {}".format(e))
-            return False

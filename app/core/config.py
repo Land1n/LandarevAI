@@ -23,5 +23,3 @@ class Settings(BaseSettings):
     LOGGING_LEVEL: int = ( logging.DEBUG if DEBUG else logging.INFO )
 
 settings = Settings()
-
-logging.basicConfig(level=settings.LOGGING_LEVEL)
