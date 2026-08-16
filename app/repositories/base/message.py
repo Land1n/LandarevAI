@@ -10,5 +10,9 @@ class MessageRepository(GenericRepository[MessageModel]):
     def read_by_role(self,role_name:str) -> Answer[MessageModel]:
         pass
 
+    @abstractmethod
+    def read_by_chat(self, chat_id: int) -> Answer[MessageModel]:
+        pass
+
     def _model_class(self) -> type:
         return MessageModel

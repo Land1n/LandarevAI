@@ -1,19 +1,68 @@
-/* chat.css — стили для страницы чата */
+/* chat.css — полный стиль для страницы чата с левой панелью */
 
-/* ===== Контейнер и новый компактный хедер ===== */
-.container {
+
+.app-wrapper {
+    display: flex;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1200px;
     height: 90vh;
+    gap: 0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* ===== Левая панель с кнопками ===== */
+.side-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 8px;
+    background: #121216;
+    border-radius: 20px 0 0 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: none;
+    width: 64px;
+    flex-shrink: 0;
+}
+
+.side-toolbar button {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.side-toolbar button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    transform: translateY(-2px);
+}
+.side-toolbar button:active {
+    transform: scale(0.95);
+}
+
+/* ===== Основной контейнер чата ===== */
+.container {
+    flex: 1;
     background: #1a1a1e;
-    border-radius: 24px;
+    border-radius: 0 24px 24px 0;
     box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(88, 60, 180, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: none;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+/* ===== Шапка ===== */
 .chat-header {
     padding: 12px 20px;
     background: #121216;
@@ -23,6 +72,7 @@
     justify-content: space-between;
     align-items: center;
 }
+
 .logo-container {
     display: flex;
     align-items: center;
@@ -43,14 +93,11 @@
     font-size: 16px;
     font-weight: 600;
     color: #fff;
-    background: none;
-    -webkit-text-fill-color: #fff;
-    background-clip: unset;
+    margin: 0;
 }
 .subtitle {
     font-size: 11px;
     color: rgba(255, 255, 255, 0.4);
-    -webkit-text-fill-color: rgba(255, 255, 255, 0.4);
     display: block;
 }
 .status {
@@ -72,7 +119,7 @@
     animation: pulse 2s infinite;
 }
 
-/* ===== Основная область ===== */
+/* ===== Основная область приложения ===== */
 .app {
     flex: 1;
     display: flex;
@@ -81,7 +128,7 @@
     overflow: hidden;
 }
 
-/* Чат-история (скрыта по умолчанию) */
+/* Чат-история */
 .chat-history {
     flex: 1;
     overflow-y: auto;
@@ -92,7 +139,7 @@
     gap: 14px;
 }
 
-/* ===== ОБЛАСТЬ ВВОДА ===== */
+/* ===== Область ввода ===== */
 .input-area {
     display: flex;
     flex-direction: column;
@@ -104,7 +151,6 @@
     transition: flex 0.3s ease, padding 0.3s ease;
 }
 
-/* Приветственный текст */
 .welcome-content {
     text-align: center;
     margin-bottom: 28px;
@@ -117,9 +163,9 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin: 0;
 }
 
-/* ===== ОБОЛОЧКА ВВОДА (без лишних кнопок) ===== */
 .input-wrapper {
     display: flex;
     align-items: center;
@@ -155,7 +201,6 @@
     cursor: not-allowed;
 }
 
-/* ===== КНОПКА ОТПРАВКИ (круглая) ===== */
 .send-btn {
     width: 44px;
     height: 44px;
@@ -191,7 +236,7 @@
     transform: none;
 }
 
-/* ===== РЕЖИМ ЧАТА (переключается JS) ===== */
+/* ===== Режим чата (переключается JS) ===== */
 .app.chat-mode .chat-history {
     display: flex;
 }
@@ -222,7 +267,7 @@
     height: 20px;
 }
 
-/* ===== Сообщения и индикатор печати (остались без изменений) ===== */
+/* ===== Сообщения ===== */
 .message {
     background: #1e1e24;
     padding: 14px 18px;
@@ -364,15 +409,106 @@
 }
 
 /* ===== Скроллбар ===== */
-.chat-history::-webkit-scrollbar { width: 5px; }
-.chat-history::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
-.chat-history::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.3); border-radius: 10px; }
-.chat-history::-webkit-scrollbar-thumb:hover { background: rgba(102, 126, 234, 0.5); }
+.chat-history::-webkit-scrollbar {
+    width: 5px;
+}
+.chat-history::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+.chat-history::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 10px;
+}
+.chat-history::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
 
-/* ===== Адаптив ===== */
-@media (max-width: 480px) {
-    .container {
+/* ===== Анимации ===== */
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ===== Сайдбар ===== */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 280px;
+    height: 100vh;
+    background: #121216;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    transition: left 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+}
+.sidebar.open {
+    left: 0;
+}
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+.sidebar-header button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+    cursor: pointer;
+}
+.sidebar-content .chat-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: background 0.2s;
+}
+.sidebar-content .chat-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.sidebar-content .chat-item.active {
+    background: rgba(102, 126, 234, 0.2);
+}
+.sidebar-content .chat-item a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    display: block;
+}
+
+/* ===== Адаптив для мобильных ===== */
+@media (max-width: 768px) {
+    .app-wrapper {
+        padding: 0;
         height: 100vh;
+    }
+    .side-toolbar {
+        width: 48px;
+        padding: 12px 4px;
+        border-radius: 0;
+    }
+    .side-toolbar button {
+        width: 36px;
+        height: 36px;
+        padding: 4px;
+    }
+    .container {
         border-radius: 0;
     }
     .chat-header {
@@ -393,11 +529,9 @@
         font-size: 10px;
         padding: 3px 8px;
     }
-
     .welcome-content h2 {
         font-size: 20px;
     }
-
     .input-wrapper {
         padding: 4px 4px 4px 12px;
         border-radius: 16px;
@@ -414,8 +548,6 @@
         width: 18px;
         height: 18px;
     }
-
-    /* Режим чата на мобильных */
     .app.chat-mode .input-area {
         padding: 8px 14px 12px;
     }
@@ -431,28 +563,78 @@
         height: 30px;
     }
 }
-/* Кнопка очистки чата */
-.clear-chat-btn {
+
+/* ===== Общие стили для скроллбара (дубль, уже есть) ===== */
+::-webkit-scrollbar {
+    width: 5px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.5);
+}
+/* Обновлённые стили для сайдбара */
+.sidebar-content .chat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    transition: background 0.2s;
+    gap: 8px; /* Отступ между названием и кнопкой */
+}
+
+.sidebar-content .chat-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-content .chat-item.active {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+/* Ссылка на чат растягивается, чтобы занимать свободное место */
+.chat-link {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.delete-chat-btn {
     background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.4);
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    border: none;
+    color: rgba(255, 255, 255, 0.3); /* Приглушённый цвет, как у других иконок */
     cursor: pointer;
-    font-size: 18px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
 }
-.clear-chat-btn:hover {
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.3);
-    background: rgba(239, 68, 68, 0.1);
+
+.delete-chat-btn:hover {
+    color: #ef4444; /* Красный при наведении (как в кнопке удалить все) */
+    background: rgba(239, 68, 68, 0.15);
     transform: scale(1.05);
 }
-.clear-chat-btn:active {
+
+.delete-chat-btn:active {
     transform: scale(0.95);
+}
+
+/* При необходимости выровнять SVG по центру */
+.delete-chat-btn svg {
+    display: block;
 }

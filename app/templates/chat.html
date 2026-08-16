@@ -9,65 +9,119 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 </head>
 <body>
-    <div class="container" id="appContainer">
-        <!-- Компактный хедер (убрана основная шапка, но сохранена) -->
-        <div class="chat-header">
-            <div class="logo-container">
-                <div class="logo-icon">🤖</div>
-                <div>
-                    <h1>LandarevAI</h1>
-                    <span class="subtitle">Искусственный интеллект</span>
-                </div>
-            </div>
-            <div class="status">
-                <span class="status-dot"></span>
-                <span>Online</span>
-            </div>
-            <button class="clear-chat-btn" id="clearChatBtn" title="Очистить чат">🗑️</button>
+    <!-- Внешний контейнер: левая панель + основной чат -->
+    <div class="app-wrapper">
+        <!-- Левая вертикальная панель с кнопками -->
+        <div class="side-toolbar">
+            <button class="chat-list-toggle" id="chatListToggle" title="Список чатов">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <button class="new-chat-btn" id="newChatBtn" title="Новый чат">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+            <button class="delete-all-chats-btn" id="deleteAllChatsBtn" title="Удалить все чаты">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+            </button>
         </div>
 
-        <!-- Основная область (переключается режим) -->
-        <div class="app" id="appArea">
-            <!-- Чат-история (изначально скрыта) -->
-            <div class="chat-history" id="chatWindow">
-                {% if messages %}
-                    {% for msg in messages %}
-                        <div class="message {% if msg.username == 'LandarevAI' %}ai-message{% endif %}">
-                            <div class="message-header">
-                                <span class="username">{{ msg.username }}</span>
-                                <span class="time">{{ msg.time }}</span>
-                            </div>
-                            <div class="message-text">
-                                {% if msg.is_markdown %}
-                                    {{ msg.text|safe }}
-                                {% else %}
-                                    {{ msg.text }}
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+        <!-- Основной контейнер чата -->
+        <div class="container" id="appContainer">
+            <!-- Шапка (только логотип и статус) -->
+            <div class="chat-header">
+                <div class="logo-container">
+                    <div class="logo-icon">🤖</div>
+                    <div>
+                        <h1>LandarevAI</h1>
+                        <span class="subtitle">Искусственный интеллект</span>
+                    </div>
+                </div>
+                <div class="status">
+                    <span class="status-dot"></span>
+                    <span>Online</span>
+                </div>
             </div>
 
-            <!-- Область ввода (изначально центрирована) -->
-            <div class="input-area" id="inputArea">
-                <div class="welcome-content" id="welcomeContent">
-                    <h2>Начните общение с LandarevAI</h2>
+            <!-- Основная область -->
+            <div class="app" id="appArea">
+                <!-- Чат-история -->
+                <div class="chat-history" id="chatWindow" data-chat-id="{{ current_chat_id }}">
+                    {% if messages %}
+                        {% for msg in messages %}
+                            <div class="message {% if msg.username == 'LandarevAI' %}ai-message{% endif %}">
+                                <div class="message-header">
+                                    <span class="username">{{ msg.username }}</span>
+                                    <span class="time">{{ msg.time }}</span>
+                                </div>
+                                <div class="message-text">
+                                    {% if msg.is_markdown %}
+                                        {{ msg.text|safe }}
+                                    {% else %}
+                                        {{ msg.text }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
-                <!-- Чистая строка ввода (без лишних кнопок) -->
-                <div class="input-wrapper">
-                    <input type="text" id="messageInput" placeholder="Спросите LandarevAI..." maxlength="500">
-                    <button id="sendButton" class="send-btn">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="19" x2="12" y2="5"></line>
-                            <polyline points="5 12 12 5 19 12"></polyline>
-                        </svg>
-                    </button>
+                <!-- Область ввода -->
+                <div class="input-area" id="inputArea">
+                    <div class="welcome-content" id="welcomeContent">
+                        <h2>Начните общение с LandarevAI</h2>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="text" id="messageInput" placeholder="Спросите LandarevAI..." maxlength="500">
+                        <button id="sendButton" class="send-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Сайдбар со списком чатов (выезжает слева поверх панели) -->
+    <div class="sidebar" id="chatSidebar">
+        <div class="sidebar-header">
+            <span>Чаты</span>
+            <button class="close-sidebar" id="closeSidebar">✕</button>
+        </div>
+        <div class="sidebar-content" id="chatList">
+            {% for chat in chats %}
+            <div class="chat-item {% if chat.id == current_chat_id %}active{% endif %}" data-chat-id="{{ chat.id }}">
+                <!-- Ссылка на чат (занимает всё свободное место) -->
+                <a href="/chat?chat_id={{ chat.id }}" class="chat-link">{{ chat.name }}</a>
+                <!-- Кнопка удалить этот чат -->
+                <button class="delete-chat-btn" data-chat-id="{{ chat.id }}" title="Удалить этот чат">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Скрытые данные -->
+    <span id="currentChatName" style="display:none">{{ current_chat_name }}</span>
 
     <script src="{{ url_for('static', path='js/chat.js') }}"></script>
 </body>

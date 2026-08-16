@@ -16,6 +16,6 @@ class ChatModel(ChatShema, table=True):
     __tablename__ = "chat"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-
+    name: Optional[str] = Field(default=None, nullable=False)
     messages: List["MessageModel"] = Relationship(back_populates="chat")
 

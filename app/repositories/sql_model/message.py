@@ -15,5 +15,15 @@ class SqlModelMessageRepository(SQLModelGenericRepository[MessageModel],MessageR
 
     @convert_result
     @logger("Repository")
+    def read_by_chat(self, chat_id: int) -> Answer[MessageModel]:
+        try:
+            statement = select(MessageModel).where(MessageModel.chat_id == chat_id)
+            messages = self.session.exec(statement).all()
+            return Answer[MessageModel](result=list(messages))
+        except Exception as e:
+            return Answer[MessageModel](result=[], level=logging.ERROR, description=str(e))
+
+    @convert_result
+    @logger("Repository")
     def read_by_role(self, role_name: str) -> Answer[MessageModel]:
         return Answer(result=[], level=logging.WARNING, description="This is not work") # TODO: Пока не готово

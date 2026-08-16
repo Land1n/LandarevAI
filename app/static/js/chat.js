@@ -6,6 +6,9 @@ const appArea = document.getElementById('appArea');
 let typingIndicator = null;
 let isFirstMessage = true;
 
+// Получаем ID текущего чата из data-атрибута
+let currentChatId = parseInt(chatWindow.dataset.chatId) || null;
+
 function renderMarkdown(text) {
     if (typeof marked !== 'undefined') {
         marked.setOptions({ breaks: true, gfm: true, sanitize: false });
@@ -79,38 +82,75 @@ function getCurrentTime() {
            now.getMinutes().toString().padStart(2, '0');
 }
 
-// --- НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БД ---
-
-// Сохраняет сообщение в БД через POST /chat/
+// --- Сохранение сообщения в БД (привязка к текущему чату) ---
 async function saveMessageToDB(text, roleName) {
-    const response = await fetch('/chat/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            text: text,
-            role_name: roleName
-        })
-    });
-    if (!response.ok) {
-        throw new Error(`Ошибка сохранения сообщения: ${response.status}`);
+    try {
+        const response = await fetch(`/chat/api/${currentChatId}/message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: text,
+                role_name: roleName
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`Ошибка сохранения сообщения: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка saveMessageToDB:', error);
+        window.location.href = '/error?code=500';
     }
-    return await response.json();
 }
 
-// --- ОСТАВЛЯЕМ ВЫЗОВ AI ---
-
+// --- Отправка запроса к AI ---
 async function sendMessageToAI(text) {
-    const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
-    if (!response.ok) {
-        throw new Error(`Ошибка AI: ${response.status}`);
+    try {
+        const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
+        if (!response.ok) {
+            throw new Error(`Ошибка AI: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.message;
+    } catch (error) {
+        console.error('Ошибка sendMessageToAI:', error);
+        window.location.href = '/error?code=500';
     }
-    const data = await response.json();
-    return data.message;
 }
 
-// --- ПЕРЕДЕЛАННАЯ ОСНОВНАЯ ФУНКЦИЯ ---
+// --- Генерация названия чата через AI (новый эндпоинт) ---
+async function generateChatTitle(firstMessage) {
+    try {
+        const response = await fetch('/api/v1/ai/generate-title', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                messages: [{role: 'user', content: firstMessage}]
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`Ошибка generate-title: ${response.status}`);
+        }
+        const data = await response.json();
+        const title = data.title || 'Новый чат';
+        // Обновляем имя чата на сервере
+        const updateResp = await fetch(`/chat/api/${currentChatId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name: title})
+        });
+        if (!updateResp.ok) {
+            throw new Error(`Ошибка обновления имени: ${updateResp.status}`);
+        }
+        // Перезагружаем страницу, чтобы обновить название в сайдбаре
+        window.location.reload();
+    } catch (error) {
+        console.error('Ошибка generateChatTitle:', error);
+        // Не редиректим на ошибку, просто игнорируем, так как это не критично
+    }
+}
 
 function switchToChatMode() {
     if (!appArea.classList.contains('chat-mode')) {
@@ -121,6 +161,7 @@ function switchToChatMode() {
     }
 }
 
+// --- Основная функция отправки сообщения ---
 async function sendMessage() {
     const text = messageInput.value.trim();
     const username = localStorage.getItem('username') || 'Пользователь';
@@ -139,7 +180,6 @@ async function sendMessage() {
         isFirstMessage = false;
     }
 
-    // Блокируем интерфейс
     sendButton.disabled = true;
     messageInput.disabled = true;
     sendButton.innerHTML = `<span style="font-size:12px;font-weight:600;">...</span>`;
@@ -147,31 +187,33 @@ async function sendMessage() {
     const userTime = getCurrentTime();
 
     try {
-        // 1. Сохраняем сообщение пользователя в БД
+        // 1. Сохраняем сообщение пользователя
         await saveMessageToDB(text, username);
-        // 2. Отображаем его в чате
         addMessageToChat(username, text, userTime, false);
         messageInput.value = '';
 
-        // 3. Получаем ответ от AI
+        // 2. Получаем ответ AI
         showTypingIndicator();
         const aiResponse = await sendMessageToAI(text);
         removeTypingIndicator();
 
-        // 4. Сохраняем ответ AI в БД
+        // 3. Сохраняем ответ AI
         await saveMessageToDB(aiResponse, 'LandarevAI');
-        // 5. Отображаем ответ AI
         const aiTime = getCurrentTime();
         addMessageToChat('LandarevAI', aiResponse, aiTime, true);
 
+        // 4. Если чат новый (имя "Новый чат"), генерируем название
+        const chatNameSpan = document.getElementById('currentChatName');
+        if (chatNameSpan && chatNameSpan.textContent === 'Новый чат') {
+            await generateChatTitle(text);
+        }
     } catch (error) {
         removeTypingIndicator();
-        console.error('Ошибка:', error);
+        console.error('Ошибка в sendMessage:', error);
+        // Показываем сообщение об ошибке
         const errorTime = getCurrentTime();
-        // Показываем сообщение об ошибке (без сохранения)
         addMessageToChat('LandarevAI', 'Извините, произошла ошибка. Попробуйте позже.', errorTime, false);
     } finally {
-        // Разблокируем интерфейс
         sendButton.disabled = false;
         messageInput.disabled = false;
         sendButton.innerHTML = `
@@ -184,7 +226,7 @@ async function sendMessage() {
     }
 }
 
-// Обработчики событий (без изменений)
+// Обработчики отправки сообщения
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !messageInput.disabled) {
@@ -193,6 +235,7 @@ messageInput.addEventListener('keydown', (e) => {
     }
 });
 
+// При загрузке страницы фокус и переключение режима, если есть сообщения
 document.addEventListener('DOMContentLoaded', () => {
     messageInput.focus();
     if (chatWindow.children.length > 0) {
@@ -201,39 +244,112 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- Функция удаления всех сообщений ---
-async function deleteAllMessages() {
-    // Подтверждение
-    if (!confirm('Вы уверены, что хотите удалить всю историю чата?')) {
+// --- Управление чатами (тулбар и сайдбар) ---
+
+// Блокировка повторного нажатия на кнопку "+"
+let isCreatingChat = false;
+
+// Кнопка "Новый чат" – создаёт только если текущий чат не пуст
+document.getElementById('newChatBtn').addEventListener('click', async () => {
+    // Если уже идет создание, игнорируем повторный клик
+    if (isCreatingChat) return;
+
+    // Проверяем, есть ли в текущем чате сообщения
+    const messages = chatWindow.querySelectorAll('.message');
+    if (messages.length === 0) {
+        // Если сообщений нет, ничего не делаем (остаёмся в текущем чате)
         return;
     }
 
+    isCreatingChat = true;
+    const btn = document.getElementById('newChatBtn');
+    btn.style.opacity = '0.5';
+    btn.disabled = true;
+
     try {
-        const response = await fetch('/chat/', {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            throw new Error(`Ошибка удаления: ${response.status}`);
+        const resp = await fetch('/chat/api/', { method: 'POST' });
+        if (!resp.ok) {
+            throw new Error(`Ошибка создания чата: ${resp.status}`);
         }
-        // Успешно – очищаем DOM
-        // Удаляем все сообщения и индикатор печати
-        const messages = chatWindow.querySelectorAll('.message');
-        messages.forEach(msg => msg.remove());
-        removeTypingIndicator(); // если он висит
-
-        // Переключаем обратно в приветственный режим
-        appArea.classList.remove('chat-mode');
-        isFirstMessage = true;
-
-        // Показываем приветствие (оно скрыто в режиме чата)
-        // Оно уже есть в DOM, просто скрыто через display:none в .chat-mode .welcome-content
-        // Поэтому после снятия класса оно появится
-
+        const data = await resp.json();
+        // Проверяем наличие id
+        if (data && typeof data.id === 'number') {
+            window.location.href = `/chat?chat_id=${data.id}`;
+        } else {
+            // Если id не пришёл, редирект на ошибку
+            window.location.href = '/error?code=500';
+        }
     } catch (error) {
-        console.error('Ошибка при очистке чата:', error);
-        alert('Не удалось очистить чат. Попробуйте позже.');
+        console.error('Ошибка создания чата:', error);
+        window.location.href = '/error?code=500';
+    } finally {
+        isCreatingChat = false;
+        btn.style.opacity = '1';
+        btn.disabled = false;
     }
-}
+});
 
-// --- Обработчик для кнопки очистки ---
-document.getElementById('clearChatBtn').addEventListener('click', deleteAllMessages);
+// Кнопка "Удалить все чаты"
+document.getElementById('deleteAllChatsBtn').addEventListener('click', async () => {
+    if (!confirm('Удалить все чаты?')) return;
+    try {
+        const resp = await fetch('/chat/api/', { method: 'DELETE' });
+        if (!resp.ok) {
+            throw new Error(`Ошибка удаления: ${resp.status}`);
+        }
+        window.location.href = '/chat';
+    } catch (error) {
+        console.error('Ошибка удаления всех чатов:', error);
+        window.location.href = '/error?code=500';
+    }
+});
+
+// Кнопка открытия/закрытия сайдбара
+document.getElementById('chatListToggle').addEventListener('click', () => {
+    document.getElementById('chatSidebar').classList.toggle('open');
+});
+document.getElementById('closeSidebar').addEventListener('click', () => {
+    document.getElementById('chatSidebar').classList.remove('open');
+});
+
+// Закрытие сайдбара при клике вне его
+document.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('chatSidebar');
+    const toggle = document.getElementById('chatListToggle');
+    if (sidebar.classList.contains('open') &&
+        !sidebar.contains(e.target) &&
+        !toggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+    }
+});
+
+// 3. Удаление отдельного чата (обработчик через делегирование событий)
+document.getElementById('chatList').addEventListener('click', async (e) => {
+    const deleteBtn = e.target.closest('.delete-chat-btn');
+    if (!deleteBtn) return;
+
+    // Останавливаем всплытие, чтобы не сработал переход по ссылке чата
+    e.stopPropagation();
+    e.preventDefault();
+
+    const chatId = parseInt(deleteBtn.dataset.chatId);
+    if (!chatId) return;
+
+    if (!confirm('Удалить этот чат?')) return;
+
+    try {
+        const resp = await fetch(`/chat/api/${chatId}`, { method: 'DELETE' });
+        if (!resp.ok) throw new Error(resp.status);
+
+        // Если удалили текущий чат, переходим на главную (которая выберет следующий)
+        if (currentChatId === chatId) {
+            window.location.href = '/chat';
+        } else {
+            // Иначе просто перезагружаем список
+            window.location.reload();
+        }
+    } catch (error) {
+        // Любая ошибка на сервере кидает на страницу ошибки
+        window.location.href = '/error?code=500';
+    }
+});
