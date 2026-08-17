@@ -1,4 +1,24 @@
-/* common.css — общие стили для всех страниц */
+/* common.css — глобальные стили и CSS-переменные */
+:root {
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #121216;
+    --bg-chat: #1a1a1e;
+    --bg-input: #242428;
+    --bg-input-focus: #2a2a30;
+    --accent: #667eea;
+    --accent-light: #a78bfa;
+    --accent-dark: #764ba2;
+    --text-primary: #fff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --border-color: rgba(255, 255, 255, 0.05);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+    --shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(88, 60, 180, 0.1);
+    --transition: 0.3s ease;
+    --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
 * {
     margin: 0;
@@ -7,8 +27,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #0a0a0a;
+    font-family: var(--font);
+    background: var(--bg-primary);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -19,6 +39,7 @@ body {
     padding: 20px;
 }
 
+/* Анимации */
 @keyframes pulse {
     0% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.4; transform: scale(0.8); }
@@ -26,30 +47,22 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(16px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Скроллбар */
 ::-webkit-scrollbar {
     width: 5px;
 }
-
 ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.02);
     border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb {
     background: rgba(102, 126, 234, 0.3);
     border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(102, 126, 234, 0.5);
 }

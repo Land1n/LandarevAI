@@ -9,6 +9,9 @@ from app.repositories.sql_model.role import SqlModelRoleRepository, RoleReposito
 from app.services.chat import ChatService
 from app.repositories.sql_model.chat import SqlModelChatRepository, ChatRepository
 
+from app.services.ai_model import AIModelService
+from app.repositories.sql_model.ai_model import SqlModelAIModelRepository, AIModelRepository
+
 from sqlmodel import Session
 from fastapi import Depends
 
@@ -36,3 +39,11 @@ def get_chat_service(
         role_repo: RoleRepository = Depends(get_role_repository)
 ):
     return ChatService(chat_repo, message_repo, role_repo)
+
+def get_ai_model_repository(session: Session = Depends(get_session)):
+    return SqlModelAIModelRepository(session)
+
+def get_ai_model_service(
+    repo: AIModelRepository = Depends(get_ai_model_repository)
+):
+    return AIModelService(repo)

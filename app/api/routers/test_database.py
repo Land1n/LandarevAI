@@ -3,16 +3,19 @@ from app.database.database import create_db_and_tables
 from app.core.dependencies import (
     get_message_service, MessageService,
     get_role_service, RoleService,
-    get_chat_service, ChatService
+    get_chat_service, ChatService,
+    get_ai_model_service, AIModelService
 )
 
 from app.schemas.message import MessageShema
 from app.schemas.role import RoleSchema
 from app.schemas.chat import ChatShema, ChatResponse
+from app.schemas.ai_model import AIModelSchema
 
 from app.models.message import MessageModel
 from app.models.role import RoleModel
 from app.models.chat import ChatModel
+from app.models.ai_model import AIModel
 
 from fastapi import APIRouter, Depends
 
@@ -33,9 +36,15 @@ router_chat =APIRouter(
     prefix="/api/v1/test",
     tags=["Test DataBase Chat"],
 )
+router_ai_model =APIRouter(
+    prefix="/api/v1/test",
+    tags=["Test DataBase ModelAi"],
+)
+
 router.include_router(router_role)
 router.include_router(router_message)
 router.include_router(router_chat)
+router.include_router(router_ai_model)
 
 # --- Message endpoints ---
 
@@ -141,3 +150,34 @@ def add_message_to_chat(
     new_message = MessageModel(**message.model_dump())
     result = service.add_message_to_chat(chat_id, new_message)
     return {"result": result}
+
+# --- AIModel endpoints ---
+
+@router_ai_model.get("/ai-model")
+def get_ai_models(service: AIModelService = Depends(get_ai_model_service)):
+    create_db_and_tables()
+    return {"result": service.list_models()}
+
+@router_ai_model.get("/ai-model/{model_id}")
+def get_ai_model(model_id: int, service: AIModelService = Depends(get_ai_model_service)):
+    create_db_and_tables()
+    model = service.read_model(model_id)
+    if model is None:
+        return {"result": "Model not found"}
+    return {"result": model}
+
+@router_ai_model.post("/ai-model")
+def create_ai_model(model: AIModelSchema, service: AIModelService = Depends(get_ai_model_service)):
+    create_db_and_tables()
+    new_model = AIModel(**model.model_dump())
+    return {"result": service.create_model(new_model)}
+
+@router_ai_model.put("/ai-model/{model_id}")
+def update_ai_model(model_id: int, model: AIModelSchema, service: AIModelService = Depends(get_ai_model_service)):
+    new_model = AIModel(**model.model_dump())
+    return {"result": service.update_model(model_id, new_model)}
+
+@router_ai_model.delete("/ai-model/{model_id}")
+def delete_ai_model(model_id: int, service: AIModelService = Depends(get_ai_model_service)):
+    create_db_and_tables()
+    return {"result": service.delete_model(model_id)}
