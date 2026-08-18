@@ -22,7 +22,8 @@ class SqlModelChatRepository(SQLModelGenericRepository[ChatModel], ChatRepositor
                 select(ChatModel)
                 .where(ChatModel.id == id)
                 .options(
-                    selectinload(ChatModel.messages).selectinload(MessageModel.role)
+                    selectinload(ChatModel.messages).selectinload(MessageModel.role),
+                    selectinload(ChatModel.model)  # теперь отдельно
                 )
             )
             entity:ChatModel = self.session.exec(statement).first()

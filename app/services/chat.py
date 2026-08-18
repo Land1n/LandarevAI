@@ -140,3 +140,13 @@ class ChatService:
             return Answer[MessageModel](result=True, level=logging.INFO)
         except Exception as e:
             return Answer[MessageModel](result=False, level=logging.ERROR, description=str(e))
+
+    @convert_result
+    @logger("ChatService")
+    def set_model_for_chat(self, chat_id: int, model_id: int) -> bool:
+        """Устанавливает модель для чата."""
+        chat = self.chat_repository.read_by_id(chat_id)
+        if not chat:
+            return Answer[ChatModel](result=False, level=logging.ERROR, description=f"Chat {chat_id} not found")
+        chat.model_id = model_id
+        return self.update_chat(chat_id, chat)

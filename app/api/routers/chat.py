@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Request, Depends, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from sqlmodel import select
 from typing import List, Optional
 
 from app.core.config import settings
 from app.core.dependencies import (
-    get_chat_service, get_message_service, get_role_service,
-    ChatService, MessageService, RoleService
+    get_chat_service, get_message_service,
+    ChatService, MessageService,
 )
 from app.schemas.chat import ChatShema, ChatResponse, ChatCreateResponse
 from app.schemas.message import MessageShema
@@ -40,15 +39,13 @@ def render_markdown(text: str) -> str:
 async def chat_page(
     request: Request,
     chat_id: Optional[int] = Query(None, description="ID чата для отображения"),
-    chat_service: ChatService = Depends(get_chat_service),
-    message_service: MessageService = Depends(get_message_service),
+    chat_service: ChatService = Depends(get_chat_service)
 ):
     try:
         create_db_and_tables()
         templates = Jinja2Templates(directory=str(settings.TEMPLATES_DIR))
 
-        all_chats = chat_service.list_chats()  # List[ChatModel]
-
+        all_chats = chat_service.list_chats()
         current_chat = None
         if chat_id is not None:
             current_chat = chat_service.read_chat_by_id(chat_id)
@@ -60,7 +57,7 @@ async def chat_page(
             if not created:
                 return RedirectResponse(url="/error?code=500", status_code=500)
             current_chat = chat_service.read_chat_by_id(new_chat.id)
-            all_chats = chat_service.list_chats()  # обновить список
+            all_chats = chat_service.list_chats()
 
         messages = current_chat.messages if current_chat else []
         rendered_messages = []
@@ -79,12 +76,14 @@ async def chat_page(
             context={
                 "messages": rendered_messages,
                 "chats": all_chats,
+                "current_chat_model_url":current_chat.model.url if current_chat and current_chat.model else "openrouter/free",
                 "current_chat_id": current_chat.id if current_chat else None,
                 "current_chat_name": current_chat.name if current_chat else ""
             }
         )
     except:
         return RedirectResponse(url="/error?code=500", status_code=302)
+
 # ---- API для управления чатами ----
 
 @router.get("/api/", response_model=List[ChatShema])
@@ -122,20 +121,26 @@ async def get_chat(
         raise HTTPException(status_code=500, detail="get_chat")
     return chat
 
+
 @router.put("/api/{chat_id}")
-async def update_chat_name(
-    chat_id: int,
-    chat_data: ChatShema,
-    chat_service: ChatService = Depends(get_chat_service)
+async def update_chat(
+        chat_id: int,
+        chat_data: ChatShema,
+        chat_service: ChatService = Depends(get_chat_service)
 ):
-    """Обновить имя чата."""
+    """Обновить имя и модель чата."""
     existing = chat_service.read_chat_by_id(chat_id)
     if not existing:
-        raise HTTPException(status_code=500, detail="update_chat_name")
+        raise HTTPException(status_code=404, detail="Чат не найден")
+
+    # Обновляем поля
     existing.name = chat_data.name
+    if chat_data.model_id is not None:
+        existing.model_id = chat_data.model_id
+
     success = chat_service.update_chat(chat_id, existing)
     if not success:
-        raise HTTPException(status_code=500, detail="update_chat_name")
+        raise HTTPException(status_code=500, detail="Ошибка обновления чата")
     return {"ok": True}
 
 @router.delete("/api/{chat_id}")

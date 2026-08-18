@@ -174,6 +174,7 @@ def create_ai_model(model: AIModelSchema, service: AIModelService = Depends(get_
 
 @router_ai_model.put("/ai-model/{model_id}")
 def update_ai_model(model_id: int, model: AIModelSchema, service: AIModelService = Depends(get_ai_model_service)):
+    create_db_and_tables()
     new_model = AIModel(**model.model_dump())
     return {"result": service.update_model(model_id, new_model)}
 

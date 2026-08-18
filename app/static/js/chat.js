@@ -1,5 +1,3 @@
-// chat.js — полный скрипт для чата с разделением на логические блоки
-
 // ============================================================
 // 1. DOM-ссылки и состояние
 // ============================================================
@@ -8,9 +6,17 @@ const messageInput = document.getElementById('messageInput');
 const sendButton = document.getElementById('sendButton');
 const appArea = document.getElementById('appArea');
 
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPopover = document.getElementById('settingsPopover');
+const modelListContainer = document.getElementById('modelListContainer');
+const closeSettingsBtn = document.getElementById('closeSettings');
+const currentModelIdInput = document.getElementById('currentModelId');
+const modelDisplaySpan = document.getElementById('modelDisplay');
+
 let typingIndicator = null;
 let isFirstMessage = true;
 const currentChatId = parseInt(chatWindow.dataset.chatId) || null;
+let currentModelId = currentModelIdInput ? parseInt(currentModelIdInput.value) || null : null;
 
 // ============================================================
 // 2. Вспомогательные утилиты
@@ -108,7 +114,12 @@ async function saveMessageToDB(text, roleName) {
 
 async function sendMessageToAI(text) {
     try {
-        const response = await fetch(`/api/v1/ai/?message=${encodeURIComponent(text)}`);
+        // Новый эндпоинт: POST /api/v1/ai/chat/{chatId}/message
+        const response = await fetch(`/api/v1/ai/chat/${currentChatId}/message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         return data.message;
@@ -124,7 +135,10 @@ async function generateChatTitle(firstMessage) {
         const response = await fetch('/api/v1/ai/generate-title', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: 'user', content: firstMessage }] })
+            body: JSON.stringify({
+                messages: [{ role: 'user', content: firstMessage }],
+                chat_id: currentChatId
+            })
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
@@ -133,7 +147,7 @@ async function generateChatTitle(firstMessage) {
         const updateResp = await fetch(`/chat/api/${currentChatId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: title })
+            body: JSON.stringify({ name: chatName, model_id: modelId })
         });
         if (!updateResp.ok) throw new Error(`HTTP ${updateResp.status}`);
         // Обновляем название на странице без перезагрузки
@@ -149,7 +163,89 @@ async function generateChatTitle(firstMessage) {
 }
 
 // ============================================================
-// 5. Переключение режима чата
+// 5. Загрузка моделей и выбор
+// ============================================================
+async function loadModels() {
+    try {
+        const response = await fetch('/api/v1/ai/ai-model');
+        if (!response.ok) throw new Error('Failed to load models');
+        const models = await response.json();
+        return models;
+    } catch (error) {
+        console.error('loadModels error:', error);
+        return [];
+    }
+}
+
+function renderModelList(models, selectedId) {
+    if (!modelListContainer) return;
+    modelListContainer.innerHTML = '';
+    if (models.length === 0) {
+        modelListContainer.innerHTML = '<p style="color:rgba(255,255,255,0.5);">Нет доступных моделей</p>';
+        return;
+    }
+    models.forEach(model => {
+        const div = document.createElement('div');
+        div.className = 'model-option';
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'ai_model';
+        radio.value = model.id;
+        radio.id = `model_${model.id}`;
+        if (selectedId === model.id) radio.checked = true;
+        // При выборе сразу отправляем на сервер
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                selectModel(model.id);
+            }
+        });
+        const label = document.createElement('label');
+        label.htmlFor = `model_${model.id}`;
+        label.textContent = model.url; // или model.name, если есть
+        div.appendChild(radio);
+        div.appendChild(label);
+        modelListContainer.appendChild(div);
+    });
+}
+
+async function selectModel(modelId) {
+    if (!currentChatId) {
+        alert('Сначала создайте чат');
+        return;
+    }
+    try {
+        // Получаем текущее имя чата
+        const nameSpan = document.getElementById('currentChatName');
+        const chatName = nameSpan ? nameSpan.textContent : 'Новый чат';
+        const response = await fetch(`/chat/api/${currentChatId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: chatName, model_id: modelId })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // Обновляем текущий model_id
+        currentModelId = modelId;
+        // Обновляем отображение модели в интерфейсе
+        updateModelDisplay(modelId);
+        // Закрываем popover
+        settingsPopover.classList.remove('open');
+        // Перезагружаем страницу, чтобы обновить все данные (простой способ)
+        window.location.reload();
+    } catch (error) {
+        console.error('selectModel error:', error);
+        alert('Не удалось изменить модель');
+    }
+}
+
+function updateModelDisplay(modelId) {
+    // Поскольку мы перезагружаем страницу, это не нужно, но оставим для возможного будущего
+    if (modelDisplaySpan) {
+        // Можно найти URL модели, но проще перезагрузить
+    }
+}
+
+// ============================================================
+// 6. Переключение режима чата
 // ============================================================
 function switchToChatMode() {
     if (!appArea.classList.contains('chat-mode')) {
@@ -159,7 +255,7 @@ function switchToChatMode() {
 }
 
 // ============================================================
-// 6. Основная отправка сообщения
+// 7. Основная отправка сообщения
 // ============================================================
 async function sendMessage() {
     const text = messageInput.value.trim();
@@ -222,7 +318,7 @@ async function sendMessage() {
 }
 
 // ============================================================
-// 7. Обработчики событий (ввод, кнопки)
+// 8. Обработчики событий (ввод, кнопки)
 // ============================================================
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keydown', (e) => {
@@ -239,10 +335,14 @@ document.addEventListener('DOMContentLoaded', () => {
         switchToChatMode();
         isFirstMessage = false;
     }
+    // Обновить отображение модели, если есть
+    if (currentModelId && modelDisplaySpan) {
+        // Можно загрузить название модели, но пока оставим как есть
+    }
 });
 
 // ============================================================
-// 8. Управление чатами (тулбар, сайдбар)
+// 9. Управление чатами (тулбар, сайдбар)
 // ============================================================
 let isCreatingChat = false;
 
@@ -325,7 +425,29 @@ document.getElementById('chatList').addEventListener('click', async (e) => {
     }
 });
 
-// Настройки (заглушка)
-document.getElementById('settingsBtn').addEventListener('click', () => {
-    alert('Настройки будут доступны в следующей версии');
+// ============================================================
+// 10. Настройки – popover
+// ============================================================
+settingsBtn.addEventListener('click', async () => {
+    if (settingsPopover.classList.contains('open')) {
+        settingsPopover.classList.remove('open');
+        return;
+    }
+    // Загружаем список моделей
+    const models = await loadModels();
+    renderModelList(models, currentModelId);
+    settingsPopover.classList.add('open');
+});
+
+closeSettingsBtn.addEventListener('click', () => {
+    settingsPopover.classList.remove('open');
+});
+
+// Закрыть по клику вне
+document.addEventListener('click', (e) => {
+    if (settingsPopover.classList.contains('open') &&
+        !settingsPopover.contains(e.target) &&
+        !settingsBtn.contains(e.target)) {
+        settingsPopover.classList.remove('open');
+    }
 });
